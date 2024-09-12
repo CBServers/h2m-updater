@@ -25,6 +25,9 @@ namespace updater
 
 		void update_file(const file_info& file) const;
 
+		std::size_t get_update_size(const std::vector<file_info>& files) const;
+		std::size_t get_available_drive_space() const;
+
 		[[nodiscard]] bool is_outdated_file(const file_info& file) const;
 		[[nodiscard]] std::filesystem::path get_drive_filename(const file_info& file) const;
 
