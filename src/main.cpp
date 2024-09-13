@@ -30,7 +30,7 @@ void start_h2m()
 	ZeroMemory(&pi, sizeof(pi));
 
 	// Create the process
-	if (!CreateProcess(NULL,   // No module name (use command line)
+	if (!CreateProcessA(NULL,   // No module name (use command line)
 		(LPSTR)command,        // Command line
 		NULL,                  // Process handle not inheritable
 		NULL,                  // Thread handle not inheritable
@@ -72,6 +72,10 @@ int main(const int argc, const char** argv)
 	catch (std::exception& e)
 	{
 		MessageBoxA(NULL, e.what(), "Error", MB_OK | MB_ICONERROR);
+		return -1;
+	}
+	catch (...)
+	{
 		return -1;
 	}
 

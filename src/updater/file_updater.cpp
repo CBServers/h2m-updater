@@ -305,7 +305,7 @@ namespace updater
 			utils::nt::relaunch_self();
 		}
 
-		throw update_cancelled();
+		utils::nt::terminate();
 	}
 
 	void file_updater::update_files(const std::vector<file_info>& outdated_files) const
@@ -337,9 +337,7 @@ namespace updater
 					try
 					{
 						const auto& file = outdated_files[index];
-						//printf("Downloading file: %s\n", get_filename(file.name).data());
 						this->update_file(file);
-						//printf("Done downloading file: %s\n", get_filename(file.name).data());
 					}
 					catch (...)
 					{
@@ -370,7 +368,7 @@ namespace updater
 			}
 		});
 
-		printf("Done downloading/updating files");
+		printf("Done downloading/updating files\n");
 	}
 
 	bool file_updater::is_outdated_file(const file_info& file) const
