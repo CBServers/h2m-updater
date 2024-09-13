@@ -200,7 +200,7 @@ namespace updater
 		std::string data;
 		if (!utils::io::write_file(out_file, data, false))
 		{
-			throw std::runtime_error("Failed to write: " + file.name);
+			throw std::runtime_error("Failed to write file: " + out_file.string());
 		}
 
 		std::ofstream ofs(out_file, std::ios::binary);
@@ -209,16 +209,32 @@ namespace updater
 			throw std::runtime_error("Failed to open file: " + out_file.string());
 		}
 
-		utils::http::get_data_stream(url, {}, {}, [&](const char* chunk, size_t size)
+		int currentPercent = 0;
+		const auto success = utils::http::get_data_stream(url, {}, [&](size_t progress, size_t total_size)
+		{
+			auto progressRatio = (total_size > 0 && progress >= 0) ? static_cast<double>(progress) / total_size : 0.0;
+			auto progressPercent = int(progressRatio * 100.0);
+			if (progressPercent == currentPercent)
+				return;
+
+			currentPercent = progressPercent;
+			printf("Downloading: %s (%d%%)\n", get_filename(file.name).data(), progressPercent);
+		}, 
+		[&](const char* chunk, size_t size)
 		{
 			if (chunk && size > 0)
 			{
 				ofs.write(chunk, size);
 			}
-			//printf("Updating %s: %zd\n", file.name.data(), size);
+			
 		});
 
 		ofs.close();
+
+		if (!success)
+		{
+			throw std::runtime_error("Failed to download file: " + out_file.string());
+		}
 
 		// Verify file size
 		std::ifstream ifs(out_file, std::ios::binary | std::ios::ate);
@@ -229,7 +245,7 @@ namespace updater
 
 		if (ifs.tellg() != file.size)
 		{
-			throw std::runtime_error("Downloaded file size mismatch: " + url);
+			throw std::runtime_error("Downloaded file size mismatch: " + out_file.string());
 		}
 	}
 
@@ -301,6 +317,8 @@ namespace updater
 
 		utils::concurrency::container<std::exception_ptr> exception{};
 
+		printf("Downloading/updating files\n");
+
 		for (size_t i = 0; i < thread_count; ++i)
 		{
 			threads.emplace_back([&]()
@@ -319,9 +337,9 @@ namespace updater
 					try
 					{
 						const auto& file = outdated_files[index];
-						printf("Downloading file: %s\n", get_filename(file.name).data());
+						//printf("Downloading file: %s\n", get_filename(file.name).data());
 						this->update_file(file);
-						printf("Done downloading file: %s\n", get_filename(file.name).data());
+						//printf("Done downloading file: %s\n", get_filename(file.name).data());
 					}
 					catch (...)
 					{
@@ -352,7 +370,7 @@ namespace updater
 			}
 		});
 
-		printf("Done updating files\n");
+		printf("Done downloading/updating files\n");
 	}
 
 	bool file_updater::is_outdated_file(const file_info& file) const

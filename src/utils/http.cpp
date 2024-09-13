@@ -12,7 +12,7 @@ namespace utils::http
 	{
 		struct progress_helper
 		{
-			const std::function<void(size_t)>* callback{};
+			const std::function<void(size_t, size_t)>* callback{};
 			std::exception_ptr exception{};
 		};
 
@@ -22,7 +22,7 @@ namespace utils::http
 			std::exception_ptr exception{};
 		};
 
-		int progress_callback(void* clientp, const curl_off_t /*dltotal*/, const curl_off_t dlnow,
+		int progress_callback(void* clientp, const curl_off_t dltotal, const curl_off_t dlnow,
 			const curl_off_t /*ultotal*/, const curl_off_t /*ulnow*/)
 		{
 			auto* helper = static_cast<progress_helper*>(clientp);
@@ -31,7 +31,7 @@ namespace utils::http
 			{
 				if (*helper->callback)
 				{
-					(*helper->callback)(dlnow);
+					(*helper->callback)(dlnow, dltotal);
 				}
 			}
 			catch (...)
@@ -75,7 +75,7 @@ namespace utils::http
 	}
 
 	std::optional<std::string> get_data(const std::string& url, const headers& headers,
-		const std::function<void(size_t)>& callback, const uint32_t retries)
+		const std::function<void(size_t, size_t)>& callback, const uint32_t retries)
 	{
 		curl_slist* header_list = nullptr;
 		auto* curl = curl_easy_init();
@@ -147,7 +147,7 @@ namespace utils::http
 	}
 
 	bool get_data_stream(const std::string& url, const headers& headers,
-		const std::function<void(size_t)>& progress_callback_,
+		const std::function<void(size_t, size_t)>& progress_callback_,
 		const std::function<void(const char*, size_t)>& stream_callback, const uint32_t retries)
 	{
 		curl_slist* header_list = nullptr;
