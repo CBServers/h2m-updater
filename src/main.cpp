@@ -18,7 +18,7 @@ void start_h2m()
 {
 	if (!utils::io::file_exists("h2m-mod.exe"))
 	{
-		return;
+		throw std::runtime_error("h2m-mod.exe not found!");
 	}
 
 	const char* command = "h2m-mod.exe";
@@ -57,12 +57,17 @@ int main(const int argc, const char** argv)
 {
 	try
 	{
-		if(check_if_has_mwr())
+		if (!check_if_has_mwr())
 		{
-			updater::run();
+			return 0;
 		}
-		
-		start_h2m();
+
+		updater::run();
+
+		if (utils::question::ask_y_n_question("Files are up to date. Would you like to run H2M-Mod?"))
+		{
+			start_h2m();
+		}
 	}
 	catch (std::exception& e)
 	{

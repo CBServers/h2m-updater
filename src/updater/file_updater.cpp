@@ -370,7 +370,7 @@ namespace updater
 			}
 		});
 
-		printf("Done downloading/updating files\n");
+		printf("Done downloading/updating files");
 	}
 
 	bool file_updater::is_outdated_file(const file_info& file) const
