@@ -101,6 +101,10 @@ namespace updater
 				const auto parsed_main_infos = parse_file_infos(main_json.value());
 				file_info.insert(file_info.end(), parsed_main_infos.begin(), parsed_main_infos.end());
 			}
+			else
+			{
+				throw std::runtime_error("Failed to fetch file info! Server may be down/offline.");
+			}
 
 			if (properties.aw_maps)
 			{
