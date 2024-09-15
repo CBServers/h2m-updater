@@ -254,4 +254,7 @@ namespace utils::nt
 	__declspec(noreturn) void terminate(uint32_t code = 0);
 
 	std::string get_user_name();
+
+	bool start_process(const std::string& command);
+	bool is_process_running(const std::string& processName);
 }

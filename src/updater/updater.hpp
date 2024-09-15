@@ -1,7 +1,5 @@
 #pragma once
 
-#include "update_cancelled.hpp"
-
 namespace updater
 {
 	struct config

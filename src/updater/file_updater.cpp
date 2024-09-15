@@ -194,11 +194,11 @@ namespace updater
 
 	void file_updater::update_file(const file_info& file) const
 	{
-		const auto url = get_update_folder() + file.name;
+		const auto url = get_update_folder() + file.name + "?" + file.hash;
 		const auto out_file = this->get_drive_filename(file);
 		
-		std::string data;
-		if (!utils::io::write_file(out_file, data, false))
+		std::string empty{};
+		if (!utils::io::write_file(out_file, empty, false))
 		{
 			throw std::runtime_error("Failed to write file: " + out_file.string());
 		}
@@ -236,16 +236,23 @@ namespace updater
 			throw std::runtime_error("Failed to download file: " + out_file.string());
 		}
 
-		// Verify file size
-		std::ifstream ifs(out_file, std::ios::binary | std::ios::ate);
-		if (!ifs)
+		if (utils::io::file_size(out_file) != file.size)
 		{
-			throw std::runtime_error("Failed to open file for verification: " + out_file.string());
+			throw std::runtime_error("Downloaded file size mismatchh: " + out_file.string());
 		}
 
-		if (ifs.tellg() != file.size)
+		if (!is_map_file(file.name)) //ignore verifying hash for map files since it takes too long
 		{
-			throw std::runtime_error("Downloaded file size mismatch: " + out_file.string());
+			std::string data{};
+			if (!utils::io::read_file(out_file, &data))
+			{
+				throw std::runtime_error("Failed to read file for hash: " + out_file.string());
+			}
+
+			if (get_hash(data) != file.hash)
+			{
+				throw std::runtime_error("Downloaded file hash mismatch: " + out_file.string());
+			}
 		}
 	}
 

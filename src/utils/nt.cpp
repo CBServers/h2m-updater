@@ -3,6 +3,7 @@
 #include "nt.hpp"
 
 #include <lmcons.h>
+#include <tlhelp32.h>
 
 #include "string.hpp"
 
@@ -339,5 +340,61 @@ namespace utils::nt
 		}
 
 		return std::string(username, username_len - 1);
+	}
+
+	bool start_process(const std::string& command)
+	{
+		const auto command_line = command.data();
+		STARTUPINFOA startup_info;
+		PROCESS_INFORMATION process_info;
+
+		ZeroMemory(&startup_info, sizeof(startup_info));
+		ZeroMemory(&process_info, sizeof(process_info));
+		startup_info.cb = sizeof(startup_info);
+
+		char current_dir[MAX_PATH];
+		GetCurrentDirectoryA(sizeof(current_dir), current_dir);
+
+		if (!CreateProcessA(NULL, (LPSTR)command_line, nullptr, nullptr, false, NULL, nullptr, 
+			current_dir, &startup_info, &process_info))
+		{
+			return false;
+		}
+
+		WaitForSingleObject(process_info.hProcess, INFINITE);
+		CloseHandle(process_info.hProcess);
+		CloseHandle(process_info.hThread);
+
+		return true;
+	}
+
+	bool is_process_running(const std::string& processName)
+	{
+		HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hProcessSnap == INVALID_HANDLE_VALUE) 
+		{
+			return false;
+		}
+
+		PROCESSENTRY32 pe32;
+		pe32.dwSize = sizeof(PROCESSENTRY32);
+
+		if (!Process32First(hProcessSnap, &pe32)) 
+		{
+			CloseHandle(hProcessSnap);
+			return false;
+		}
+
+		do 
+		{
+			if (std::string(pe32.szExeFile) == processName) 
+			{
+				CloseHandle(hProcessSnap);
+				return true;
+			}
+		} while (Process32Next(hProcessSnap, &pe32));
+
+		CloseHandle(hProcessSnap);
+		return false;
 	}
 }

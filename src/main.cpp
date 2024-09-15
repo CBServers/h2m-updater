@@ -2,6 +2,7 @@
 
 #include "updater/updater.hpp"
 #include <utils/io.hpp>
+#include <utils/nt.hpp>
 #include <utils/question.hpp>
 
 bool check_if_has_mwr()
@@ -21,36 +22,15 @@ void start_h2m()
 		throw std::runtime_error("h2m-mod.exe not found!");
 	}
 
-	const char* command = "h2m-mod.exe";
-	// Initialize the STARTUPINFO structure
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-
-	// Create the process
-	if (!CreateProcessA(NULL,   // No module name (use command line)
-		(LPSTR)command,        // Command line
-		NULL,                  // Process handle not inheritable
-		NULL,                  // Thread handle not inheritable
-		FALSE,                 // Set handle inheritance to FALSE
-		0,                     // No creation flags
-		NULL,                  // Use parent's environment block
-		NULL,                  // Use parent's starting directory 
-		&si,                   // Pointer to STARTUPINFO structure
-		&pi)                   // Pointer to PROCESS_INFORMATION structure
-		) {
-		std::cerr << "CreateProcess failed (" << GetLastError() << ").\n";
-		return;
+	if (utils::nt::is_process_running("h2m-mod.exe"))
+	{
+		throw std::runtime_error("h2m-mod.exe is already running!");
 	}
 
-	// Wait until child process exits.
-	WaitForSingleObject(pi.hProcess, INFINITE);
-
-	// Close process and thread handles.
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
+	if (!utils::nt::start_process("h2m-mod.exe"))
+	{
+		throw std::runtime_error("Failed to start h2m-mod.exe!");
+	}
 }
 
 int main(const int argc, const char** argv)
